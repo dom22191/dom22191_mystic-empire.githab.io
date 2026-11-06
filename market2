@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Донат — MysticEmpire</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background: linear-gradient(160deg, #1a2332 0%, #10161f 100%);
+        color: #e8eef5;
+        min-height: 100vh;
+        padding: 40px 16px;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    h1 {
+        text-align: center;
+        font-size: 2.2rem;
+        margin-bottom: 10px;
+        color: #ffd54a;
+        text-shadow: 2px 2px 0 #3d2f00;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #9fb3c8;
+        margin-bottom: 40px;
+    }
+
+    /* ---------- Сетка карточек ---------- */
+    .donate-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 24px;
+    }
+
+    .donate-card {
+        background: rgba(255,255,255,.05);
+        border: 2px solid rgba(255,255,255,.1);
+        border-radius: 16px;
+        padding: 28px 22px;
+        text-align: center;
+        cursor: pointer;
+        transition: transform .2s, box-shadow .2s, border-color .2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .donate-card:hover {
+        transform: translateY(-6px);
+        border-color: #ffd54a;
+        box-shadow: 0 12px 30px rgba(0,0,0,.5);
+    }
+
+    .donate-icon { font-size: 2.6rem; margin-bottom: 12px; }
+
+    .donate-card h3 {
+        font-size: 1.35rem;
+        color: #ffd54a;
+        margin-bottom: 6px;
+    }
+
+    .donate-price {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #7ee787;
+        margin: 8px 0 16px;
+    }
+
+    .donate-hint {
+        margin-top: auto;
+        font-size: .9rem;
+        color: #9fb3c8;
+        background: rgba(255,255,255,.07);
+        padding: 6px 16px;
+        border-radius: 20px;
+    }
+
+    /* Редкие донаты — чуть заметнее */
+    .donate-card.legendary {
+        border-color: rgba(255,213,74,.45);
+        background: rgba(255,213,74,.06);
+    }
+
+    /* ---------- Модальное окно ---------- */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(5, 8, 12, .8);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 100;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+        background: linear-gradient(170deg, #232f42, #161d29);
+        border: 2px solid #ffd54a;
+        border-radius: 18px;
+        max-width: 520px;
+        width: 100%;
+        max-height: 85vh;
+        overflow-y: auto;
+        padding: 32px 30px;
+        position: relative;
+        box-shadow: 0 20px 60px rgba(0,0,0,.7);
+        animation: modalIn .25s ease;
+    }
+    @keyframes modalIn {
+        from { transform: translateY(24px); opacity: 0; }
+        to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    .modal-close {
+        position: absolute;
+        top: 14px;
+        right: 16px;
+        background: none;
+        border: none;
+        color: #9fb3c8;
+        font-size: 1.6rem;
+        cursor: pointer;
+        transition: color .2s, transform .2s;
+    }
+    .modal-close:hover { color: #fff; transform: rotate(90deg); }
+
+    .modal h2 {
+        color: #ffd54a;
+        font-size: 1.7rem;
+        margin-bottom: 4px;
+    }
+
+    .modal .modal-price {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #7ee787;
+        margin-bottom: 20px;
+    }
+
+    .modal ul { list-style: none; }
+    .modal li {
+        padding: 8px 0 8px 30px;
+        position: relative;
+        line-height: 1.45;
+        border-bottom: 1px dashed rgba(255,255,255,.08);
+    }
+    .modal li:last-child { border-bottom: none; }
+    .modal li::before {
+        content: "✦";
+        position: absolute;
+        left: 4px;
+        color: #ffd54a;
+    }
+
+    .modal-note {
+        margin-top: 18px;
+        font-size: .85rem;
+        color: #9fb3c8;
+    }
+
+    .buy-btn {
+        display: block;
+        width: 100%;
+        margin-top: 22px;
+        padding: 14px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(180deg, #ffd54a, #e0a800);
+        color: #2b1d00;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        box-shadow: 0 4px 0 #9c7400;
+        transition: transform .15s;
+    }
+    .buy-btn:hover { transform: translateY(-2px); }
+    .buy-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #9c7400; }
+
+    .back-link {
+        display: block;
+        text-align: center;
+        margin-top: 40px;
+        color: #4fc3f7;
+        text-decoration: none;
+        font-size: 1.05rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+        h1 { font-size: 1.6rem; }
+        .donate-grid { grid-template-columns: 1fr; }
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ Донат MysticEmpire</h1>
+        <p class="subtitle">Выбери привилегию и нажми на карточку, чтобы узнать подробности</p>
+
+        <div class="donate-grid" id="donateGrid"></div>
+
+        <a class="back-link" href="index.html">← На главную</a>
+    </div>
+
+    <!-- Модальное окно -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modalBox">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <h2 id="modalTitle"></h2>
+            <div class="modal-price" id="modalPrice"></div>
+            <ul id="modalFeatures"></ul>
+            <p class="modal-note" id="modalNote"></p>
+            <button class="buy-btn" id="buyBtn">Купить</button>
+        </div>
+    </div>
+
+<script>
+    const donates = [
+        {
+            icon: "🎒",
+            name: "Странник",
+            price: "79 ₽",
+            legendary: false,
+            note: "Отличный старт для знакомства с привилегиями.",
+            features: [
+                "Префикс [Странник] в чате",
+                "2 доп. слота в /home",
+                "Набор новичка (еда, инструменты, факелы)",
+                "Цветной ник в чате",
+                "Режим ГМ1 (/gamemode 1)"
+            ]
+        },
+        {
+            icon: "📜",
+            name: "Адепт",
+            price: "199 ₽",
+            legendary: false,
+            note: "Всё из «Странника» плюс новые возможности.",
+            features: [
+                "Всё из «Странника»",
+                "4 слота /home + /back",
+                "Доступ к /craft и /enderchest",
+                "Кит раз в 12 часов",
+                "2 сундука-магазина"
+            ]
+        },
+        {
+            icon: "🔮",
+            name: "Маг",
+            price: "399 ₽",
+            legendary: false,
+            note: "Всё из «Адепта» плюс новые возможности.",
+            features: [
+                "Всё из «Адепта»",
+                "6 слотов /home, /tpahere",
+                "Кит раз в 8 часов (с алмазным набором)",
+                "/feed раз в 10 минут",
+                "Цветной префикс + свечение ника (glow)",
+                "Приоритетный вход на сервер"
+            ]
+        },
+        {
+            icon: "👑",
+            name: "Архимаг",
+            price: "799 ₽",
+            legendary: false,
+            note: "Всё из «Мага» плюс новые возможности.",
+            features: [
+                "Всё из «Мага»",
+                "10 слотов /home, /heal раз в 10 минут",
+                "Кит раз в 6 часов + зачарованные предметы",
+                "Личный варп (/warp set) — 2 точки",
+                "Доступ к донат-миру с ресурсами",
+                "Создание собственной гильдии/клана"
+            ]
+        },
+        {
+            icon: "🛡️",
+            name: "Хранитель",
+            price: "1499 ₽",
+            legendary: false,
+            note: "Всё из «Архимага» плюс новые возможности.",
+            features: [
+                "Всё из «Архимага»",
+                "15 слотов /home, /fly в своём регионе",
+                "Кит раз в 4 часа + эксклюзивный сет брони",
+                "4 личных варпа, /nick (смена ника)",
+                "Свой цветной тег в чате и TAB",
+                "+5 регионов под застройку"
+            ]
+        },
+        {
+            icon: "🏛️",
+            name: "Император",
+            price: "3499 ₽",
+            legendary: true,
+            note: "Всё из «Хранителя» — максимум власти и комфорта.",
+            features: [
+                "Всё из «Хранителя»",
+                "/fly везде (кроме PvP-зон), /god в своём регионе",
+                "Неограниченные /home",
+                "Кит раз в 2 часа + уникальный питомец/маунт",
+                "Именной префикс на выбор + анимированный тег",
+                "Свой NPC-торговец в спавне",
+                "Голос в закрытом канале с админами",
+                "Участие в тестировании новых механик"
+            ]
+        },
+        {
+            icon: "⛏️",
+            name: "Творец",
+            price: "999 ₽",
+            legendary: false,
+            note: "Всё из «Архимага» — выбор для строителей.",
+            features: [
+                "Всё из «Архимага»",
+                "ГМ1 без ограничений по времени в своём регионе",
+                "Неограниченный доступ к /craft и /enderchest",
+                "+10 регионов под застройку",
+                "Кит строителя (блоки, инструменты) раз в 6 часов",
+                "Возможность строить в креатив-мире сервера",
+                "Префикс [Творец] с особым цветом"
+            ]
+        },
+        {
+            icon: "⭐",
+            name: "Легенда",
+            price: "1799 ₽",
+            legendary: true,
+            note: "Всё из «Хранителя» — для тех, кто хочет выделиться.",
+            features: [
+                "Всё из «Хранителя»",
+                "/fly в своём регионе без ограничений по времени",
+                "20 слотов /home",
+                "Кит раз в 3 часа + набор редких ресурсов",
+                "/nick + свой цветной тег в TAB",
+                "6 личных варпов",
+                "Собственный именной питомец",
+                "Резервный слот входа + приоритет в очереди"
+            ]
+        }
+    ];
+
+    const grid = document.getElementById('donateGrid');
+    const overlay = document.getElementById('modalOverlay');
+
+    // Строим карточки
+    donates.forEach((d, i) => {
+        const card = document.createElement('div');
+        card.className = 'donate-card' + (d.legendary ? ' legendary' : '');
+        card.innerHTML = `
+            <div class="donate-icon">${d.icon}</div>
+            <h3>${d.name}</h3>
+            <div class="donate-price">${d.price}</div>
+            <div class="donate-hint">Подробнее →</div>
+        `;
+        card.onclick = () => openModal(i);
+        grid.appendChild(card);
+    });
+
+    function openModal(i) {
+        const d = donates[i];
+        document.getElementById('modalTitle').textContent = d.icon + ' ' + d.name;
+        document.getElementById('modalPrice').textContent = d.price;
+        document.getElementById('modalFeatures').innerHTML =
+            d.features.map(f => `<li>${f}</li>`).join('');
+        document.getElementById('modalNote').textContent = d.note;
+        document.getElementById('buyBtn').textContent = 'Купить ' + d.name + ' — ' + d.price;
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Клик по фону закрывает окно
+    overlay.addEventListener('click', e => {
+        if (e.target === overlay) closeModal();
+    });
+
+    // Esc тоже закрывает
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeModal();
+    });
+</script>
+</body>
+</html>
